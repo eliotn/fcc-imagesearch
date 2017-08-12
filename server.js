@@ -18,8 +18,8 @@ else {
     user: process.env.C9_USER,
     password: '',
     database: 'c9'
-  }
-);
+  });
+}
 
 var http = require('http');
 var path = require('path');
