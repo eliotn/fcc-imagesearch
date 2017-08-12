@@ -1,11 +1,11 @@
-const SERVER = process.env.SERVER_URL || "https://image-search-eliotn.c9users.io";
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const IMGUR_KEY = process.env.IMGUR_KEY;
 const mysql = require('mysql');
 const moment = require('moment');
 const request = require('request');
 var pool = mysql.createPool(
   {
+    url: process.env.CLEARDB_DATABASE_URL,
     connectionLimit : 10,
     host: 'localhost',
     user: process.env.C9_USER,
