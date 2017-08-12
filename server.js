@@ -10,8 +10,7 @@ if (process.env.CLEARDB_DATABASE_URL) {
   );
 }
 else {
-  pool = mysql.createPool(
-  {   
+  pool = mysql.createPool({   
     connectionLimit : 10,
     host: 'localhost',
     user: process.env.C9_USER,
@@ -36,7 +35,7 @@ pool.query("CREATE TABLE IF NOT EXISTS searches("
   + "id INT NOT NULL,"
   + "modid INT NOT NULL,"
   + "searchstring VARCHAR(100) NOT NULL,"
-  + "searchtime DATE,"
+  + "searchtime DATETIME,"
   + "PRIMARY KEY (id),"
   + "UNIQUE KEY (modid)"
   + ")", function(error) {
@@ -44,7 +43,6 @@ pool.query("CREATE TABLE IF NOT EXISTS searches("
     console.log(error);
   }
 });
-
 
 //GET /api/images/:searchstring - store a search and do a search
 //with imgur API
@@ -80,7 +78,9 @@ router.get('/api/imagesearch/:searchstring', function(req, res) {
         var data = body["data"];
         var output = [];
         for (var i = 0; i < data.length; i++) {
-          output.push({"page":"http://www.imgur.com/" + data[i]["id"], "image":data[i]["link"], "snippet":data[i]["title"]})
+          output.push({"page":"http://www.imgur.com/" + data[i]["id"],
+          "image":data[i]["link"],
+          "snippet":data[i]["title"]})
         }
         res.write(JSON.stringify(output));
         res.end();
