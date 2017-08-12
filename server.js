@@ -7,7 +7,7 @@ var pool;
 if (process.env.CLEARDB_DATABASE_URL) {
   pool = mysql.createPool(
   {
-    url: process.env.CLEARDB_DATABASE_URL,
+    processurl: process.env.CLEARDB_DATABASE_URL
   });
 }
 else {
