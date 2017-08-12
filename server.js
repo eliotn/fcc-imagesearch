@@ -6,9 +6,8 @@ const request = require('request');
 var pool;
 if (process.env.CLEARDB_DATABASE_URL) {
   pool = mysql.createPool(
-  {
-    processurl: process.env.CLEARDB_DATABASE_URL
-  });
+    process.env.CLEARDB_DATABASE_URL
+  );
 }
 else {
   pool = mysql.createPool(
