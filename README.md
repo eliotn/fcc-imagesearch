@@ -1,14 +1,15 @@
 ## Image Search Abstraction Layer
 
+This project is a simple image search api.
 
+To run the server:
 
+```node server.js```
 
-## Running the server
+API endpoints:
 
-1) Open `server.js` and start the app by clicking on the "Run" button in the top menu.
+GET /api/imagesearch/{:query}?offset={:offset} - 
+Get the result for the imagesearch query.  The offset is the page number.
 
-2) Alternatively you can launch the app from the Terminal:
-
-    $ node server.js
-
-Once the server is running, open the project in the shape of 'https://projectname-username.c9users.io/'. As you enter your name, watch the Users list (on the left) update. Once you press Enter or Send, the message is shared with all connected clients.
+GET /api/latest/imagesearch/ - 
+Get the 10 last search queries, returns the query and a timestamp.

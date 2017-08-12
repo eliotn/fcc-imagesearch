@@ -1,17 +1,15 @@
 {
-  "name": "imagesearch",
+  "name": "eliotn-fcc-imagesearch",
   "version": "0.1.0",
-  "description": "A simple image search api that searches imgur.",
+  "description": "An image search api that searches imgur and stores recent searches",
   "main": "server.js",
   "repository": "",
   "author": "Eliot Glairon <e@eliotglairon.com>",
   "dependencies": {
     "async": "~0.2.8",
     "express": "~3.2.4",
-    "moment": "^2.18.1",
     "mysql": "^2.14.1",
-    "request": "^2.81.0",
-    "socket.io": "~0.9.14"
+    "request": "^2.81.0"
   },
   "scripts": { "start": "node server.js" }
 }

@@ -1,15 +1,18 @@
+//Image search Free code camp project - uses mysql to store image searches from an api and
+//fetches the last 10 images.
+
 const PORT = process.env.PORT || 8080;
 const IMGUR_KEY = process.env.IMGUR_KEY;
 const mysql = require('mysql');
-const moment = require('moment');
 const request = require('request');
 var pool;
-if (process.env.CLEARDB_DATABASE_URL) {
+//connect to mysql database on c9 or on heroku
+if (process.env.CLEARDB_DATABASE_URL) {//heroku
   pool = mysql.createPool(
     process.env.CLEARDB_DATABASE_URL
   );
 }
-else {
+else {//c9 - use mysql-cli start to start the database
   pool = mysql.createPool({   
     connectionLimit : 10,
     host: 'localhost',
@@ -19,18 +22,16 @@ else {
   });
 }
 
-var http = require('http');
 var path = require('path');
 var express = require('express');
 
 var router = express();
 
-router.use(express.static(path.resolve(__dirname, 'client')));
-
 router.listen(PORT, function() {
     console.log("listening on port " + PORT);
 });
 
+//create the table if it doesn't exist
 pool.query("CREATE TABLE IF NOT EXISTS searches("
   + "id INT NOT NULL,"
   + "modid INT NOT NULL,"
@@ -51,10 +52,13 @@ router.get('/api/imagesearch/:searchstring', function(req, res) {
     res.write(JSON.stringify({"err":"your search query is too long"}));
   }
   else {
+    
     var pagenum = req.query.offset || 1;
-    //SET @rownumber = (SELECT COUNT(*) FROM searches); IF (@rownumber >= 25)" THEN END IF 
-    //cool implementation of a queue, adapted from
-    //https://www.xaprb.com/blog/2007/01/11/how-to-implement-a-queue-in-sql/
+    
+    //note: both async operations here can occur independently
+    //Store the recent search as one of the top 10 searches
+    //Thanks https://www.xaprb.com/blog/2007/01/11/how-to-implement-a-queue-in-sql/
+    //for the idea for implementing a top 10 list
     pool.query("INSERT INTO searches (id, modid, searchstring, searchtime) "
     + "SELECT COALESCE(max(id), -1) + 1, (COALESCE(max(id), -1) + 1) mod 10, ?, NOW() "
     + "FROM searches "
@@ -66,14 +70,14 @@ router.get('/api/imagesearch/:searchstring', function(req, res) {
         if (error) { console.log(error); }
       }
     );
-    request.get({url:'https://api.imgur.com/3/gallery/search/top/' + pagenum + '?q_exactly='
+    //call the api, use q_any for a more permissive query
+    request.get({url:'https://api.imgur.com/3/gallery/search/top/' + pagenum + '?q_any='
     + encodeURIComponent(req.params.searchstring),
     headers:{"Authorization":"Client-ID " + IMGUR_KEY}}, function (err, response, body) {
       
       if (err) { res.write(JSON.stringify({"err":err})); res.end(); }
       else {
-        //console.log(response);
-        //console.log(body);
+        //format data from the api and write to the response
         body = JSON.parse(body);
         var data = body["data"];
         var output = [];
