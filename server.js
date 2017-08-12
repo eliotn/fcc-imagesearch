@@ -25,16 +25,40 @@ router.use(express.static(path.resolve(__dirname, 'client')));
 router.listen(PORT, function() {
     console.log("listening on port " + PORT);
 });
+
+pool.query("CREATE TABLE IF NOT EXISTS searches("
+  + "id INT NOT NULL,"
+  + "modid INT NOT NULL,"
+  + "searchstring VARCHAR(100) NOT NULL,"
+  + "searchtime DATE,"
+  + "PRIMARY KEY (id),"
+  + "UNIQUE KEY (modid)"
+  + ")", function(error) {
+  if (error) {
+    console.log(error);
+  }
+});
+
 router.get('/api/imagesearch/:searchstring', function(req, res) {
   if (req.params.searchstring.length > 90) {
     res.write(JSON.stringify({"err":"your search query is too long"}));
   }
   else {
     var pagenum = req.query.offset || 1;
-    pool.query("INSERT INTO searches (searchstring, searchtime) VALUES (?, NOW())",
-          [req.params.searchstring], function (error, results, fields) {
-            if (error) { console.log(error); }
-    });
+    //SET @rownumber = (SELECT COUNT(*) FROM searches); IF (@rownumber >= 25)" THEN END IF 
+    //cool implementation of a queue, adapted from
+    //https://www.xaprb.com/blog/2007/01/11/how-to-implement-a-queue-in-sql/
+    pool.query("INSERT INTO searches (id, modid, searchstring, searchtime) "
+    + "SELECT COALESCE(max(id), -1) + 1, (COALESCE(max(id), -1) + 1) mod 10, ?, NOW() "
+    + "FROM searches "
+    + "ON DUPLICATE KEY UPDATE "
+    + "id = VALUES(id), "
+    + "searchstring = ?, "
+    + "searchtime = NOW() ",
+        [req.params.searchstring, req.params.searchstring], function (error, results, fields) {
+        if (error) { console.log(error); }
+      }
+    );
     request.get({url:'https://api.imgur.com/3/gallery/search/top/' + pagenum + '?q_exactly='
     + encodeURIComponent(req.params.searchstring),
     headers:{"Authorization":"Client-ID " + IMGUR_KEY}}, function (err, response, body) {
@@ -45,7 +69,6 @@ router.get('/api/imagesearch/:searchstring', function(req, res) {
         //console.log(body);
         body = JSON.parse(body);
         var data = body["data"];
-        console.log(data[0])
         var output = [];
         for (var i = 0; i < data.length; i++) {
           output.push({"page":"http://www.imgur.com/" + data[i]["id"], "image":data[i]["link"], "snippet":data[i]["title"]})
