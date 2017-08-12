@@ -39,6 +39,9 @@ pool.query("CREATE TABLE IF NOT EXISTS searches("
   }
 });
 
+
+//GET /api/images/:searchstring - store a search and do a search
+//with imgur API
 router.get('/api/imagesearch/:searchstring', function(req, res) {
   if (req.params.searchstring.length > 90) {
     res.write(JSON.stringify({"err":"your search query is too long"}));
@@ -80,6 +83,10 @@ router.get('/api/imagesearch/:searchstring', function(req, res) {
     });
   }
 });
+
+//GET /api/latest/imagesearch
+//Get last 10 search results, containing the term and
+//when the search was done.
 router.get('/api/latest/imagesearch', function(req, res) {
   pool.query("SELECT * FROM searches ORDER BY searchtime DESC LIMIT 10",
                                  function (error, results, fields) {

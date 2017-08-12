@@ -13,4 +13,5 @@
     "request": "^2.81.0",
     "socket.io": "~0.9.14"
   }
+  "scripts": { "start": "node server.js" }
 }
