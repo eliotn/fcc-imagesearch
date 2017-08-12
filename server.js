@@ -3,9 +3,16 @@ const IMGUR_KEY = process.env.IMGUR_KEY;
 const mysql = require('mysql');
 const moment = require('moment');
 const request = require('request');
-var pool = mysql.createPool(
+var pool;
+if (process.env.CLEARDB_DATABASE_URL) {
+  pool = mysql.createPool(
   {
     url: process.env.CLEARDB_DATABASE_URL,
+  });
+}
+else {
+  pool = mysql.createPool(
+  {   
     connectionLimit : 10,
     host: 'localhost',
     user: process.env.C9_USER,
