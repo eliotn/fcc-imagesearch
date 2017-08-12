@@ -70,27 +70,32 @@ router.get('/api/imagesearch/:searchstring', function(req, res) {
         if (error) { console.log(error); }
       }
     );
-    //call the api, use q_any for a more permissive query
-    request.get({url:'https://api.imgur.com/3/gallery/search/top/' + pagenum + '?q_any='
-    + encodeURIComponent(req.params.searchstring),
-    headers:{"Authorization":"Client-ID " + IMGUR_KEY}}, function (err, response, body) {
-      
-      if (err) { res.write(JSON.stringify({"err":err})); res.end(); }
-      else {
-        //format data from the api and write to the response
-        body = JSON.parse(body);
-        var data = body["data"];
-        var output = [];
-        for (var i = 0; i < data.length; i++) {
-          output.push({"page":"http://www.imgur.com/" + data[i]["id"],
-          "image":data[i]["link"],
-          "snippet":data[i]["title"]})
+    try {//grab malformed uri errors -- doesn't handle async errors
+      //call the api, use q_any for a more permissive query
+      request.get({url:'https://api.imgur.com/3/gallery/search/top/' + pagenum + '?q_any='
+      + encodeURIComponent(req.params.searchstring),
+      headers:{"Authorization":"Client-ID " + IMGUR_KEY}}, function (err, response, body) {
+        
+        if (err) { res.write(JSON.stringify({"err":err})); res.end(); }
+        else {
+          //format data from the api and write to the response
+          body = JSON.parse(body);
+          var data = body["data"];
+          var output = [];
+          for (var i = 0; i < data.length; i++) {
+            output.push({"page":"http://www.imgur.com/" + data[i]["id"],
+            "image":data[i]["link"],
+            "snippet":data[i]["title"]})
+          }
+          res.write(JSON.stringify(output));
+          res.end();
         }
-        res.write(JSON.stringify(output));
-        res.end();
-      }
       
-    });
+      });
+    }
+    catch (error) {
+      res.write({"error":"check your search parameters and try again"})
+    }
   }
 });
 
