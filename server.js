@@ -27,9 +27,6 @@ var express = require('express');
 
 var router = express();
 
-router.listen(PORT, function() {
-    console.log("listening on port " + PORT);
-});
 
 //create the table if it doesn't exist
 pool.query("CREATE TABLE IF NOT EXISTS searches("
@@ -47,7 +44,7 @@ pool.query("CREATE TABLE IF NOT EXISTS searches("
 
 //GET /api/images/:searchstring - store a search and do a search
 //with imgur API
-router.get('/api/imagesearch/:searchstring', function(req, res) {
+router.get('/api/imagesearch/:searchstring', function(req, res, next) {
   if (req.params.searchstring.length > 90) {
     res.write(JSON.stringify({"err":"your search query is too long"}));
   }
@@ -67,16 +64,15 @@ router.get('/api/imagesearch/:searchstring', function(req, res) {
     + "searchstring = ?, "
     + "searchtime = NOW() ",
         [req.params.searchstring, req.params.searchstring], function (error, results, fields) {
-        if (error) { console.log(error); }
+        if (error) { return next(error); }
       }
     );
-    try {//grab malformed uri errors -- doesn't handle async errors
       //call the api, use q_any for a more permissive query
       request.get({url:'https://api.imgur.com/3/gallery/search/top/' + pagenum + '?q_any='
-      + encodeURIComponent(req.params.searchstring),
+      + req.params.searchstring,
       headers:{"Authorization":"Client-ID " + IMGUR_KEY}}, function (err, response, body) {
         
-        if (err) { res.write(JSON.stringify({"err":err})); res.end(); }
+        if (err) { return next(err); }
         else {
           //format data from the api and write to the response
           body = JSON.parse(body);
@@ -92,20 +88,16 @@ router.get('/api/imagesearch/:searchstring', function(req, res) {
         }
       
       });
-    }
-    catch (error) {
-      res.write({"error":"check your search parameters and try again"})
-    }
   }
 });
 
 //GET /api/latest/imagesearch
 //Get last 10 search results, containing the term and
 //when the search was done.
-router.get('/api/latest/imagesearch', function(req, res) {
+router.get('/api/latest/imagesearch', function(req, res, next) {
   pool.query("SELECT * FROM searches ORDER BY searchtime DESC LIMIT 10",
                                  function (error, results, fields) {
-    if (error) { res.write(JSON.stringify({"err":error})); res.end(); }
+    if (error) { return next(error); }
     else {
       var output = [];
       for (var v of results) {
@@ -115,4 +107,20 @@ router.get('/api/latest/imagesearch', function(req, res) {
       res.end();
     }
   });
+});
+
+//default express error handler, prevents 500 on incorrectly parsed urls
+//comment out to disable
+router.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    res.write('error', {
+        message: err.message,
+        error: {}
+    });
+    res.end();
+});
+
+
+router.listen(PORT, function() {
+    console.log("listening on port " + PORT);
 });
